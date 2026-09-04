@@ -1,0 +1,88 @@
+@import "./styles/vars.css";
+@import "./styles/base.css";
+@import "./styles/icons.css";
+@import "./styles/utils.css";
+@import "./styles/components/custom-block.css";
+@import "./styles/components/vp-code-group.css";
+@import "./styles/components/vp-md.css";
+@import "./styles/components/vp-sponsor.css";
+
+@import "./styles/fonts.css";
+
+:root {
+  --vp-c-pensive-1: #d9dade;
+  --vp-c-pensive-2: #cdcfd4;
+  --vp-c-pensive-3: #c1c3ca;
+  --vp-c-pensive-soft: rgba(168, 171, 181, 0.14);
+
+  --vp-c-slate-1: #f1f5f9;
+  --vp-c-slate-2: #e2e8f0;
+  --vp-c-slate-3: #d6dee8;
+  --vp-c-slate-soft: #cad5e2;
+
+  --vp-c-wisteria-1: #304ca6;
+  --vp-c-wisteria-2: #4567db;
+  --vp-c-wisteria-3: #6980e3;
+  --vp-c-wisteria-soft: rgba(110, 132, 235, 0.14);
+}
+
+.dark {
+  --vp-c-pensive-1: #9598a4;
+  --vp-c-pensive-2: #6b6f7c;
+  --vp-c-pensive-3: #484b54;
+  --vp-c-pensive-soft: rgba(115, 119, 133, 0.16);
+
+  --vp-c-slate-1: #020618;
+  --vp-c-slate-2: #0f172b;
+  --vp-c-slate-3: #1d293d;
+  --vp-c-slate-soft: #62748e;
+
+  --vp-c-wisteria-1: #919fea;
+  --vp-c-wisteria-2: #7488e5;
+  --vp-c-wisteria-3: #4467db;
+  --vp-c-wisteria-soft: rgba(110, 132, 235, 0.16);
+}
+
+:root {
+  /* Colors */
+  --vp-c-bg: var(--vp-c-slate-2);
+  --vp-c-bg-alt: var(--vp-c-slate-3);
+  --vp-c-bg-elv: var(--vp-c-slate-1);
+  --vp-c-bg-soft: var(--vp-c-slate-3);
+
+  --vp-c-brand: #9eaaed;
+  --vp-c-brand-1: var(--vp-c-wisteria-1);
+  --vp-c-brand-2: var(--vp-c-wisteria-2);
+  --vp-c-brand-3: var(--vp-c-wisteria-3);
+  --vp-c-brand-soft: var(--vp-c-wisteria-soft);
+
+  --vp-c-default: #62748e;
+  --vp-c-default-1: var(--vp-c-pensive-1);
+  --vp-c-default-2: var(--vp-c-pensive-2);
+  --vp-c-default-3: var(--vp-c-pensive-3);
+  --vp-c-default-soft: var(--vp-c-pensive-soft);
+
+  --vp-c-divider: var(--vp-c-slate-soft);
+
+  /* Typography */
+  --vp-font-family-base:
+    -apple-system, BlinkMacSystemFont, segoe ui, Helvetica, Arial, sans-serif, apple color emoji, segoe ui emoji;
+  --vp-font-family-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+
+  /* Component: Home */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(270deg, thistle, cornflowerblue);
+}
+
+.iconify {
+  -webkit-mask: var(--icon) no-repeat;
+  mask: var(--icon) no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  background-color: currentColor;
+  display: inline-flex;
+  color: inherit;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}

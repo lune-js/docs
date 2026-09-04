@@ -1,0 +1,47 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vitepress build",
+    "clean": "rm -rf build node_modules",
+    "dev": "vitepress dev",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "fresh": "bun clean && bun install",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "postinstall": "lefthook install",
+    "preview": "vitepress preview"
+  },
+  "dependencies": {
+    "@docsearch/css": "5.0.5",
+    "@docsearch/js": "5.0.5",
+    "@vueuse/core": "14.4.0",
+    "@vueuse/integrations": "14.4.0",
+    "mark.js": "8.11.1",
+    "mermaid": "11.17.2",
+    "minisearch": "7.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.0",
+    "@types/mark.js": "8.11.12",
+    "lefthook": "2.1.12",
+    "oxc-minify": "0.148.0",
+    "oxfmt": "0.66.0",
+    "oxlint": "1.81.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "6.0.3",
+    "vite": "8.2.2",
+    "vite-bundle-analyzer": "1.3.9",
+    "vitepress": "2.0.0-alpha.19",
+    "vitepress-plugin-group-icons": "1.7.6",
+    "vitepress-plugin-llms": "1.13.5",
+    "vitepress-plugin-mermaid": "2.0.17",
+    "vue": "3.5.42"
+  },
+  "overrides": {
+    "vitepress": "2.0.0-alpha.19"
+  },
+  "packageManager": "bun@1.4.0"
+}
