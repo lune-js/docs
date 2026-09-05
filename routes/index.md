@@ -26,7 +26,7 @@ hero:
 features:
   - title: Approachable
     icon: ⭐
-    details: Builds on top of standard HTML, CSS and JavaScript with a very minimal API surface.
+    details: Reactivity with a very minimal API surface, progressively enhance new or existing markup.
   - title: Extensible
     icon: 🔭
     details: Build on top of Lune.js with custom directives and plugins to enhance development experience.
