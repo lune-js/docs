@@ -6,8 +6,8 @@
 
 | Package   | Version     |
 | --------- | ----------- |
-| `astro`   | `7.1.6`     |
-| `lune-js` | `^0.3.0`    |
+| `astro`   | `^7.0.0`    |
+| `lune-js` | `^1.0.0`    |
 | Node.js   | `>=22.12.0` |
 
 Both `astro` and `lune-js` are peer dependencies, so they live in your project — the version of Lune that ends up on the page is the one in your `package.json`.
@@ -77,19 +77,29 @@ The integration injects a small page-level script into every route:
 
 ```js
 import * as Lune from "lune-js";
-import { setup } from "virtual:@lune-js/astro/entrypoint";
+import { createApp } from "virtual:@lune-js/astro/entrypoint";
 
-const app = Lune.createApp();
-setup(app);
-window.Lune = Lune;
-document.addEventListener("DOMContentLoaded", () => app.mount());
+window.Lune = { ...Lune, createApp };
+document.addEventListener("DOMContentLoaded", () => createApp().mount());
 ```
+
+The `createApp` imported there is not Lune's own. It comes from a virtual module the integration generates around your [entrypoint](#extending-lune-with-an-entrypoint), and it calls `Lune.createApp()` with your `data`, hands the result to your default export, and returns it.
 
 Three consequences are worth internalizing:
 
-- **You never call `createApp()` yourself.** The integration owns the app instance. Extending it happens through the [entrypoint](#extending-lune-with-an-entrypoint).
+- **You never call `Lune.createApp()` yourself.** The integration owns the app instance and configures it from the [entrypoint](#extending-lune-with-an-entrypoint).
 - **`app.mount()` is called with no argument**, so Lune mounts to every top-level `lu-scope` element on the page. Elements outside a `lu-scope` are left alone.
-- **`window.Lune` is exposed** as an escape hatch, giving you `createApp`, `reactive`, `effect`, and `nextTick` from any inline script.
+- **`window.Lune` is exposed** as an [escape hatch](#window-lune), giving you `reactive`, `effect`, `nextTick`, and the integration's `createApp` from any inline script.
+
+## The `window.Lune` Escape Hatch {#window-lune}
+
+Inline scripts reach Lune through `window.Lune`. It carries everything the package exports, with one substitution: `createApp` is the integration's, not Lune's bare one.
+
+That distinction matters. An app created with `window.Lune.createApp()` gets the same `data` and the same directives and plugins as the app the integration mounts for you — you do not have to reconstruct your setup by hand. Anything you pass takes precedence over your entrypoint's `data`, which is how you layer in state that only exists at that moment:
+
+```js
+window.Lune.createApp({ user }).mount(el);
+```
 
 ## Interpolation and Astro's Braces
 
@@ -113,7 +123,7 @@ Two ways around it:
 This restriction applies to `.astro` files only. Interpolation works normally inside HTML that Astro emits verbatim — for example content injected with `set:html`, or markup rendered by a CMS.
 
 > [!IMPORTANT]
-> Custom [delimiters](/advanced/custom-delimiters) are not available through this integration. `$delimiters` is read from the object passed to `createApp()`, and the integration calls it for you.
+> There is a third way around this, and it is the most thorough: pick [delimiters](/advanced/custom-delimiters) Astro does not claim. `$delimiters` is read from the object passed to `createApp()`, so setting it on your entrypoint's [`data`](#data) export makes interpolation work normally throughout your `.astro` files.
 
 ## Passing Server Data Into Scope
 
@@ -142,7 +152,7 @@ Astro escapes the attribute for you, and Lune parses it back into a reactive sco
 
 ## Extending Lune With an Entrypoint
 
-Custom directives, plugins, and shared scope factories are registered through the `entrypoint` option. Point it at a module whose default export receives the app instance before it mounts.
+The `entrypoint` option points at a module that configures Lune before it mounts.
 
 ```js
 // astro.config.mjs
@@ -154,9 +164,65 @@ export default defineConfig({
 });
 ```
 
-The path may be a root-relative import specifier (`/src/entrypoint`) or a path relative to your project root (`./src/entrypoint`). The module must have a default export — otherwise the integration warns in development and mounts an unmodified app.
+The path may be a root-relative import specifier (`/src/entrypoint`) or a path relative to your project root (`./src/entrypoint`). The module may provide either or both of the exports below. If it provides neither, the integration warns in development and mounts an unmodified app.
 
-### Custom Directives
+### `data`
+
+A `data` export is passed straight to `createApp()` and becomes the app's root scope, which every `lu-scope` on the page inherits from. Because it is a real module export rather than serialized configuration, it can hold methods and getters — not just JSON.
+
+#### Shared Scope Factories
+
+Expressions cannot reach globals, so a function declared in a page `<script>` is invisible to your templates. Put reusable scope factories on `data` instead.
+
+```ts
+// src/entrypoint.ts
+function Counter(start = 0) {
+  return {
+    count: start,
+    get double() {
+      return this.count * 2;
+    },
+    increment() {
+      this.count++;
+    }
+  };
+}
+
+export const data = { Counter };
+```
+
+```astro
+<div lu-scope="Counter(5)">
+  <p lu-text="count"></p>
+  <p lu-text="double"></p>
+  <button @click="increment">increment</button>
+</div>
+```
+
+This is the idiomatic place for getters and methods: an object literal written inline in `lu-scope` holds data only.
+
+#### Custom Delimiters
+
+`$delimiters` is read once, when the app is created, so `data` is the only place it can be set. Choosing a pair Astro leaves alone is what makes <code v-pre>{{ }}</code>-style interpolation usable in `.astro` files.
+
+```ts
+// src/entrypoint.ts
+export const data = {
+  $delimiters: ["[[", "]]"]
+};
+```
+
+```astro
+<div lu-scope="{ count: 7 }">
+  <p>[[ count ]]</p>
+</div>
+```
+
+### `default`
+
+The default export receives the app instance after it is created but before it mounts. The module must have a default export to use this — otherwise the integration warns in development.
+
+#### Custom Directives
 
 ```ts
 // src/entrypoint.ts
@@ -175,7 +241,7 @@ export default (app: App) => {
 </div>
 ```
 
-### Plugins
+#### Plugins
 
 ```ts
 // src/entrypoint.ts
@@ -188,41 +254,6 @@ export default (app: App) => {
 ```
 
 See [Plugins](/advanced/plugins) and [Custom Directives](/advanced/custom-directives) for the full authoring API.
-
-### Shared Scope Factories
-
-Because expressions cannot reach globals, a function declared in a page `<script>` is invisible to your templates. Put reusable scope factories on the app's root scope instead — every `lu-scope` on the page inherits from it.
-
-```ts
-// src/entrypoint.ts
-import type { App } from "lune-js";
-
-function Counter(start = 0) {
-  return {
-    count: start,
-    get double() {
-      return this.count * 2;
-    },
-    increment() {
-      this.count++;
-    }
-  };
-}
-
-export default (app: App) => {
-  Object.assign(app.scope, { Counter });
-};
-```
-
-```astro
-<div lu-scope="Counter(5)">
-  <p lu-text="count"></p>
-  <p lu-text="double"></p>
-  <button @click="increment">increment</button>
-</div>
-```
-
-This is the idiomatic place for getters and methods: an object literal written inline in `lu-scope` holds data only.
 
 ## Client-Side Routing
 
@@ -256,7 +287,7 @@ import { ClientRouter } from "astro:transitions";
 The guard matters: listeners on `document` survive swaps, so registering unconditionally would stack a new listener on every navigation.
 
 > [!NOTE]
-> An app created this way starts with an empty root scope, so factories registered in your entrypoint are not available to pages reached by client-side navigation. If you rely on both features, export your factories from a module and assign them in the same script.
+> The remounted app is built by the [integration's `createApp`](#window-lune), so your entrypoint's `data` and customizations survive client-side navigation — scope factories stay available on pages reached by a swap.
 
 ## Troubleshooting
 
@@ -266,4 +297,4 @@ The guard matters: listeners on `document` survive swaps, so registering uncondi
 
 **An expression silently does nothing.** Expressions that reference `window`, `document`, `fetch`, `eval`, and similar globals are rejected for safety, with a warning in development. Move the logic into a scope method — see [Security](/advanced/security).
 
-**Directives from the entrypoint are missing.** Confirm the module has a `default` export and that the `entrypoint` path resolves from your project root, not from the config file's directory.
+**Directives or scope factories from the entrypoint are missing.** Confirm the module has the export you need — `default` for directives and plugins, `data` for root-scope factories and `$delimiters` — and that the `entrypoint` path resolves from your project root, not from the config file's directory. An entrypoint that exports neither warns in development.
