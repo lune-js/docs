@@ -29,43 +29,12 @@ export const core = defineConfig({
   outDir: "build",
   srcDir: "routes",
   srcExclude: [],
-  transformHead(context) {
-    const relativePath = context.pageData.relativePath;
+  transformHead({ pageData }) {
+    const relativePath = pageData.relativePath;
     const head: Array<[string, Record<string, string>]> = [];
-    if (relativePath === "index.md") {
-      head.push([
-        "link",
-        {
-          rel: "alternate",
-          type: "text/plain",
-          title: "LLM docs",
-          href: `${domain}/llms.txt`
-        }
-      ]);
-    }
-    if (
-      relativePath.startsWith("advanced/") ||
-      relativePath.startsWith("directives/") ||
-      relativePath.startsWith("guide/") ||
-      relativePath.startsWith("integrations/")
-    ) {
-      head.push([
-        "link",
-        {
-          rel: "alternate",
-          type: "text/markdown",
-          title: "Markdown source",
-          href: `https://raw.githubusercontent.com/lune-js/docs/refs/heads/main/routes/${relativePath}`
-        }
-      ]);
-    }
-    return head;
-  },
-  transformPageData(pageData) {
-    pageData.frontmatter.head ??= [];
 
     if (pageData.frontmatter.canonical) {
-      pageData.frontmatter.head.push([
+      head.push([
         "link",
         {
           rel: "canonical",
@@ -83,24 +52,53 @@ export const core = defineConfig({
 
     // Construct the canonical URL for the page
     let url = domain;
-    if (pageData.relativePath !== "index.md") {
-      const path = pageData.relativePath.replace(/\.md$/, ".html").replace(/\/index\.html$/, "/");
+    if (relativePath !== "index.md") {
+      const path = relativePath.replace(/\.md$/, ".html").replace(/\/index\.html$/, "/");
       if (path !== "index.html") {
         url += "/" + path.replace(/^\/+/, "");
       }
+    } else {
+      head.push([
+        "link",
+        {
+          rel: "alternate",
+          type: "text/plain",
+          title: "LLM docs",
+          href: `${domain}/llms.txt`
+        }
+      ]);
     }
 
     if (title) {
-      pageData.frontmatter.head.push(["meta", { property: "og:title", content: title }]);
-      pageData.frontmatter.head.push(["meta", { name: "twitter:title", content: title }]);
+      head.push(["meta", { property: "og:title", content: title }]);
+      head.push(["meta", { name: "twitter:title", content: title }]);
     }
 
     if (description) {
-      pageData.frontmatter.head.push(["meta", { property: "og:description", content: description }]);
-      pageData.frontmatter.head.push(["meta", { name: "twitter:description", content: description }]);
+      head.push(["meta", { property: "og:description", content: description }]);
+      head.push(["meta", { name: "twitter:description", content: description }]);
     }
 
-    pageData.frontmatter.head.push(["meta", { property: "og:url", content: url }]);
+    head.push(["meta", { property: "og:url", content: url }]);
+
+    if (
+      relativePath.startsWith("advanced/") ||
+      relativePath.startsWith("directives/") ||
+      relativePath.startsWith("guide/") ||
+      relativePath.startsWith("integrations/")
+    ) {
+      head.push([
+        "link",
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          title: "Markdown source",
+          href: `https://raw.githubusercontent.com/lune-js/docs/refs/heads/main/routes/${relativePath}`
+        }
+      ]);
+    }
+
+    return head;
   },
   titleTemplate: ":title | Lune.js",
   markdown: {

@@ -9,7 +9,7 @@ export default withMermaid(
     ...core,
     themeConfig: {
       editLink: {
-        pattern: "https://github.com/lune-js/web/edit/main/routes/:path",
+        pattern: "https://github.com/lune-js/docs/edit/main/routes/:path",
         text: "Edit this page on GitHub"
       },
 
