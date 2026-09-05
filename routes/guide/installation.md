@@ -28,7 +28,7 @@ Lune is designed to be used without a build step. You can simply load it from a 
 > For production, it is recommended to pin a specific version number to avoid unexpected breakage from newer versions.
 >
 > ```html
-> <script src="https://cdn.jsdelivr.net/npm/lune-js@0.3.0" defer init></script>
+> <script src="https://cdn.jsdelivr.net/npm/lune-js@1.0.0" defer init></script>
 > ```
 
 ## Package
