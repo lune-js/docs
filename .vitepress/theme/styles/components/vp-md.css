@@ -139,7 +139,7 @@
 
 .vp-md ul,
 .vp-md ol {
-  padding-left: 1.25rem;
+  padding-left: 20px;
   margin: 16px 0;
 }
 
@@ -379,7 +379,7 @@
 }
 
 .vp-md [class*="language-"] .has-focused-lines .line:not(.has-focus) {
-  filter: blur(0.095rem);
+  filter: blur(1.5px);
   opacity: 0.4;
   transition:
     filter 0.35s,

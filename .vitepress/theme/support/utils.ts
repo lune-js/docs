@@ -16,6 +16,8 @@ export const escapeRegExp = (str: string): string => str.replace(/[|\\{}()[\]^$+
 
 export const isExternal = (path: string): boolean => EXTERNAL_URL_RE.test(path);
 
+export const isRelativeBase = (base: string): boolean => base === "./";
+
 export const normalize = (path: string): string =>
   decodeURI(path).replace(HASH_OR_QUERY_RE, "").replace(INDEX_OR_EXT_RE, "$1");
 
@@ -45,13 +47,20 @@ export function normalizeLink(url: string): string {
 
   const { site } = useData();
 
-  const normalizedPath =
+  let normalizedPath =
     pathname.endsWith("/") || pathname.endsWith(".html")
       ? url
       : url.replace(
           /(?:(^\.+)\/)?.*$/,
           `$1${pathname.replace(/(\.md)?$/, site.value.cleanUrls ? "" : ".html")}${search}${hash}`
         );
+
+  if (isRelativeBase(site.value.base) && !site.value.cleanUrls) {
+    const pathPart = normalizedPath.replace(/[?#].*$/, "");
+    if (pathPart.endsWith("/")) {
+      normalizedPath = pathPart + "index.html" + normalizedPath.slice(pathPart.length);
+    }
+  }
 
   return withBase(normalizedPath);
 }
@@ -105,7 +114,7 @@ function sanitizeFileName(name: string): string {
 }
 
 export function throttleAndDebounce(fn: () => void, delay: number): () => void {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: number;
   let called = false;
 
   return () => {
@@ -115,9 +124,9 @@ export function throttleAndDebounce(fn: () => void, delay: number): () => void {
       fn();
       called = true;
       if (called) {
-        setTimeout(() => (called = false), delay);
+        window.setTimeout(() => (called = false), delay);
       }
-    } else timeoutId = setTimeout(fn, delay);
+    } else timeoutId = window.setTimeout(fn, delay);
   };
 }
 

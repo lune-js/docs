@@ -1,15 +1,14 @@
+import { useMediaQuery } from "@vueuse/core";
 import type { DefaultTheme } from "vitepress/theme";
-import { onMounted, onUnmounted, onUpdated, type Ref } from "vue";
+import { onMounted, onUnmounted, onUpdated, type TemplateRef } from "vue";
 import { throttleAndDebounce } from "../support/utils";
-import type { ThemeConfig } from "../types";
-import { useAside } from "./aside";
 
 const ignoreRE = /\b(?:VPBadge|header-anchor|footnote-ref|ignore-header)\b/;
 
 // cached list of anchor elements from resolveHeaders
 const resolvedHeaders: { element: HTMLHeadElement; link: string }[] = [];
 
-export function resolveTitle(theme: ThemeConfig): string {
+export function resolveTitle(theme: DefaultTheme.Config): string {
   if (typeof theme.outline === "object" && !Array.isArray(theme.outline) && theme.outline.label) {
     return theme.outline.label;
   }
@@ -17,7 +16,7 @@ export function resolveTitle(theme: ThemeConfig): string {
   return "On this page";
 }
 
-export function getHeaders(range: ThemeConfig["outline"]): DefaultTheme.OutlineItem[] {
+export function getHeaders(range: DefaultTheme.Config["outline"]): DefaultTheme.OutlineItem[] {
   const headers = [...document.querySelectorAll(".Doc h1, .Doc h2")]
     .filter((el) => el.id && el.hasChildNodes())
     .map((el) => {
@@ -48,9 +47,11 @@ function serializeHeader(h: Element): string {
 
 export function resolveHeaders(
   headers: DefaultTheme.OutlineItem[],
-  range?: ThemeConfig["outline"]
+  range?: DefaultTheme.Config["outline"]
 ): DefaultTheme.OutlineItem[] {
-  if (range === false) return [];
+  if (range === false) {
+    return [];
+  }
 
   const levelsRange = (typeof range === "object" && !Array.isArray(range) ? range.level : range) || 2;
 
@@ -60,8 +61,8 @@ export function resolveHeaders(
   return buildTree(headers, high, low);
 }
 
-export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLElement>): void {
-  const { isAsideEnabled } = useAside();
+export function useActiveAnchor(container: TemplateRef<HTMLElement>, marker: TemplateRef<HTMLElement>): void {
+  const isAsideVisible = useMediaQuery("(min-width: 1280px)");
 
   const onScroll = throttleAndDebounce(setActiveLink, 100);
 
@@ -71,7 +72,7 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
   onMounted(() => {
     requestAnimationFrame(setActiveLink);
     window.addEventListener("scroll", onScroll);
-    container.value.addEventListener("click", onClick);
+    container.value?.addEventListener("click", onClick);
   });
 
   onUpdated(() => {
@@ -84,10 +85,12 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
   });
 
   function onClick(e: MouseEvent) {
-    if (!isAsideEnabled.value) {
+    if (!isAsideVisible.value) {
       return;
     }
+
     const hash = e.target instanceof Element ? e.target.closest("a")?.hash : null;
+
     if (hash) {
       ignoreScrollOnce = true;
       activateLink(hash);
@@ -95,7 +98,7 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
   }
 
   function setActiveLink() {
-    if (!isAsideEnabled.value) return;
+    if (!isAsideVisible.value) return;
 
     if (ignoreScrollOnce) {
       ignoreScrollOnce = false;
@@ -105,7 +108,7 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
     const scrollY = window.scrollY;
     const innerHeight = window.innerHeight;
     const offsetHeight = document.body.offsetHeight;
-    const isBottom = Math.abs(scrollY + innerHeight - offsetHeight) < 1;
+    const isBottom = scrollY + innerHeight - offsetHeight >= 0;
 
     // resolvedHeaders may be repositioned, hidden or fix positioned
     const headers = resolvedHeaders
@@ -131,7 +134,7 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
 
     // page bottom - highlight last link
     if (isBottom) {
-      activateLink(headers[headers.length - 1].link);
+      activateLink(headers.at(-1)?.link ?? null);
       return;
     }
 
@@ -147,24 +150,31 @@ export function useActiveAnchor(container: Ref<HTMLElement>, marker: Ref<HTMLEle
   }
 
   function activateLink(hash: string | null) {
-    if (prevActiveLink) {
-      prevActiveLink.classList.remove("active");
-    }
+    const activeLink =
+      hash != null
+        ? (container.value?.querySelector<HTMLAnchorElement>(`a[href$="${decodeURIComponent(hash)}"]`) ?? null)
+        : null;
 
-    if (hash == null) {
-      prevActiveLink = null;
-    } else {
-      prevActiveLink = container.value.querySelector(`a[href$="${decodeURIComponent(hash)}"]`);
-    }
+    if (activeLink === prevActiveLink) return;
 
-    const activeLink = prevActiveLink;
+    prevActiveLink?.classList.remove("active");
+    prevActiveLink = activeLink;
 
     if (activeLink) {
       activeLink.classList.add("active");
-      marker.value.style.top = activeLink.offsetTop + 59 + "px";
-      marker.value.style.opacity = "1";
-    } else {
-      marker.value.style.top = "53px";
+      if (marker.value) {
+        // the links' offsetParent (.root) sits below the outline title while
+        // the marker is offset from .content, so re-align their origins
+        marker.value.style.top =
+          activeLink.offsetTop +
+          ((activeLink.offsetParent as HTMLElement)?.offsetTop ?? 0) +
+          (activeLink.offsetHeight - marker.value.offsetHeight) / 2 +
+          "px";
+        marker.value.style.opacity = "1";
+      }
+      activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } else if (marker.value) {
+      marker.value.style.top = "";
       marker.value.style.opacity = "0";
     }
   }

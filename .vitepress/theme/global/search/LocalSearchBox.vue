@@ -653,7 +653,7 @@ function onMouseMove(e: MouseEvent) {
 }
 
 .search-keyboard-shortcuts {
-  font-size: 0.8rem;
+  font-size: 12px;
   opacity: 75%;
   display: flex;
   flex-wrap: wrap;
@@ -700,7 +700,7 @@ function onMouseMove(e: MouseEvent) {
   gap: 8px;
   border-radius: 4px;
   transition: none;
-  line-height: 1rem;
+  line-height: 16px;
   border: solid 2px var(--vp-local-search-result-border);
   outline: none;
 }
@@ -769,7 +769,7 @@ function onMouseMove(e: MouseEvent) {
 }
 
 .excerpt :deep(*) {
-  font-size: 0.8rem !important;
+  font-size: 12px !important;
   line-height: 130% !important;
 }
 
@@ -815,7 +815,7 @@ function onMouseMove(e: MouseEvent) {
 }
 
 .no-results {
-  font-size: 0.9rem;
+  font-size: 14px;
   text-align: center;
   padding: 12px;
 }

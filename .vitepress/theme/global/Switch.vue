@@ -24,12 +24,13 @@ watchPostEffect(() => {
     role="switch"
     :title="switchTitle"
     :aria-checked="isDark"
+    :aria-label="theme.darkModeSwitchLabel || 'Appearance'"
     @click="toggleAppearance"
   >
     <span class="check">
       <span class="icon">
-        <span class="vpi-sun sun" />
-        <span class="vpi-moon moon" />
+        <span class="vpi-sun sun" aria-hidden="true" />
+        <span class="vpi-moon moon" aria-hidden="true" />
       </span>
     </span>
   </button>

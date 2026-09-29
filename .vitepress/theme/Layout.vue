@@ -279,7 +279,7 @@ const stars = computed(() =>
 .ContentStack {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
   flex: 1;
   width: 100%;
   overflow: hidden;

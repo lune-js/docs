@@ -1,5 +1,6 @@
-import { inBrowser, onContentUpdated, useRoute } from "vitepress";
-import type { DefaultTheme, useLayout as expected } from "vitepress/theme";
+import { useMediaQuery } from "@vueuse/core";
+import { onContentUpdated, useRoute } from "vitepress";
+import type { DefaultTheme } from "vitepress/theme";
 import {
   computed,
   shallowReadonly,
@@ -20,9 +21,9 @@ const headers = shallowRef<DefaultTheme.OutlineItem[]>([]);
 const sidebar = shallowRef<DefaultTheme.SidebarItem[]>([]);
 const subnav = shallowRef<NavItemWithLinkAndSubNav[]>([]);
 
-const is960 = shallowRef(false);
+const isDesktop = useMediaQuery("(min-width: 960px)");
 
-type Expected = Omit<ReturnType<typeof expected>, "leftAside">;
+type Expected = Omit<DefaultTheme.Layout, "leftAside">;
 
 interface UseLayout extends Expected {
   hasNavbar: ComputedRef<boolean>;
@@ -41,7 +42,7 @@ export function useLayout(): UseLayout {
     return frontmatter.value.sidebar !== false && sidebar.value.length > 0 && !isHome.value;
   });
 
-  const isSidebarEnabled = computed(() => hasSidebar.value && is960.value);
+  const isSidebarEnabled = computed(() => hasSidebar.value && isDesktop.value);
 
   const sidebarGroups = computed(() => (hasSidebar.value ? getSidebarGroups(sidebar.value) : []));
 
@@ -105,20 +106,10 @@ export function registerWatchers({ closeSidebar }: RegisterWatchersOptions) {
     headers.value = getHeaders(frontmatter.value.outline ?? theme.value.outline);
   });
 
-  if (inBrowser) {
-    is960.value = window.innerWidth >= 960;
-    window.addEventListener(
-      "resize",
-      () => {
-        is960.value = window.innerWidth >= 960;
-      },
-      { passive: true }
-    );
-  }
-
   const route = useRoute();
   watch(() => route.path, closeSidebar);
 
+  watch(isDesktop, closeSidebar);
   useCloseSidebarOnEscape(closeSidebar);
 }
 

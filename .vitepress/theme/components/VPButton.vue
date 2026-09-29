@@ -26,7 +26,7 @@ const component = computed(() => {
 <template>
   <component
     :is="component"
-    class="VPButton"
+    class="VPButton no-icon"
     :class="[size, theme]"
     :href="href ? normalizeLink(href) : undefined"
     :target="props.target ?? (isExternal ? '_blank' : undefined)"
@@ -43,6 +43,7 @@ const component = computed(() => {
   text-align: center;
   font-weight: 600;
   white-space: nowrap;
+  text-decoration: none;
   transition:
     background-color 0.25s,
     border-color 0.25s,

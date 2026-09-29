@@ -71,13 +71,12 @@ export function useSidebarItemControl(item: ComputedRef<DefaultTheme.SidebarItem
   const isActiveLink = ref(false);
   const hasActiveLink = ref(false);
 
-  async function updateActiveLink(): Promise<void> {
+  async function updateActiveLink(skipHashCheck = false): Promise<void> {
     if (item.value.link) {
-      isActiveLink.value = isActive(route.data.relativePath, route.hash, item.value.link);
+      isActiveLink.value = isActive(route.data.relativePath, route.hash, item.value.link, false, skipHashCheck);
     } else {
       isActiveLink.value = false;
     }
-
     if (isActiveLink.value) {
       hasActiveLink.value = true;
       await nextTick(() => (collapsed.value = false));
@@ -87,14 +86,26 @@ export function useSidebarItemControl(item: ComputedRef<DefaultTheme.SidebarItem
       hasActiveLink.value = false;
       return;
     }
-    hasActiveLink.value = containsActiveLink(route.data.relativePath, route.hash, item.value.items);
+    hasActiveLink.value = containsActiveLink(route.data.relativePath, route.hash, item.value.items, skipHashCheck);
     if (hasActiveLink.value) {
       await nextTick(() => (collapsed.value = false));
     }
   }
 
-  watch([item, route], updateActiveLink);
-  onMounted(updateActiveLink);
+  // runs during setup so active classes render in SSR output too; the hash
+  // isn't known on the server (and may differ at hydration), so it's skipped
+  // until mounted
+  void updateActiveLink(true);
+
+  watch([item, route], () => updateActiveLink());
+  onMounted(() => updateActiveLink());
+
+  // exact match only, unlike isActiveLink which skips the hash check before
+  // mount — links that differ only in hash must not claim aria-current in
+  // SSR output
+  const isCurrentLink = computed(() => {
+    return item.value.link ? isActive(route.data.relativePath, route.hash, item.value.link) : false;
+  });
 
   const hasChildren = computed(() => {
     return !!(item.value.items && item.value.items.length);
@@ -115,6 +126,7 @@ export function useSidebarItemControl(item: ComputedRef<DefaultTheme.SidebarItem
     collapsible,
     isLink,
     isActiveLink: isActiveLink as ComputedRef<boolean>,
+    isCurrentLink,
     hasActiveLink: hasActiveLink as ComputedRef<boolean>,
     hasChildren,
     toggle
